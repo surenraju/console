@@ -43,7 +43,9 @@ func main() {
 		log.Println("Server starting on :8081")
 		log.Println("Available endpoints:")
 		log.Println("  GET /api/v1/llm/providers      - List all LLM providers")
+		log.Println("  POST /api/v1/llm/providers     - Create a new LLM provider")
 		log.Println("  GET /api/v1/llm/providers/{name} - Get specific LLM provider")
+		log.Println("  DELETE /api/v1/llm/providers/{name} - Delete an LLM provider")
 		log.Println("  GET /health                     - Health check")
 
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {

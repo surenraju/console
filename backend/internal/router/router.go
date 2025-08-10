@@ -32,7 +32,9 @@ func NewRouter(srv *server.Server) *gin.Engine {
 		llm := apiV1.Group("/llm")
 		{
 			llm.GET("/providers", gin.WrapF(srv.GetLLMProviders))
+			llm.POST("/providers", srv.CreateLLMProvider)
 			llm.GET("/providers/:name", srv.GetLLMProviderByName)
+			llm.DELETE("/providers/:name", srv.DeleteLLMProvider)
 		}
 	}
 

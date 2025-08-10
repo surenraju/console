@@ -12,6 +12,9 @@ import (
 	aigatewayv1alpha1 "github.com/envoyproxy/ai-gateway/api/v1alpha1"
 	"github.com/envoyproxy/ai-gateway/console/backend/pkg/client"
 	"github.com/envoyproxy/ai-gateway/console/backend/pkg/llm"
+	gatewayv1alpha1 "github.com/envoyproxy/gateway/api/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	gwapiv1a3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 )
 
 // LLMProviderService handles business logic for LLM providers
@@ -70,6 +73,122 @@ func (s *LLMProviderService) GetProvider(ctx context.Context, namespace, name st
 
 	// Mask sensitive information before returning
 	return provider.MaskSecret(), nil
+}
+
+// CreateProvider creates a new LLM provider by converting it to Kubernetes resources
+func (s *LLMProviderService) CreateProvider(ctx context.Context, provider *llm.LLMProvider) error {
+	// Convert LLMProvider to Kubernetes resources
+	resources, err := provider.ToEnvoyGatewayResources()
+	if err != nil {
+		return fmt.Errorf("failed to convert provider to Kubernetes resources: %w", err)
+	}
+
+	// Create each resource in the cluster
+	for _, resource := range resources {
+		switch r := resource.(type) {
+		case *gatewayv1alpha1.Backend:
+			err = s.clientManager.Backend.Create(ctx, r)
+			if err != nil {
+				return fmt.Errorf("failed to create Backend: %w", err)
+			}
+
+		case *gwapiv1a3.BackendTLSPolicy:
+			err = s.clientManager.BackendTLSPolicy.Create(ctx, r)
+			if err != nil {
+				return fmt.Errorf("failed to create BackendTLSPolicy: %w", err)
+			}
+
+		case *aigatewayv1alpha1.BackendSecurityPolicy:
+			err = s.clientManager.BackendSecurityPolicy.Create(ctx, r)
+			if err != nil {
+				return fmt.Errorf("failed to create BackendSecurityPolicy: %w", err)
+			}
+
+		case *aigatewayv1alpha1.AIServiceBackend:
+			err = s.clientManager.AIServiceBackend.Create(ctx, r)
+			if err != nil {
+				return fmt.Errorf("failed to create AIServiceBackend: %w", err)
+			}
+
+		case *corev1.Secret:
+			err = s.clientManager.Secret.Create(ctx, r)
+			if err != nil {
+				return fmt.Errorf("failed to create Secret: %w", err)
+			}
+
+		default:
+			return fmt.Errorf("unknown resource type: %T", r)
+		}
+	}
+
+	return nil
+}
+
+// DeleteProvider deletes an LLM provider by removing all its Kubernetes resources
+func (s *LLMProviderService) DeleteProvider(ctx context.Context, namespace, name string) error {
+	// Load all resources for this provider first
+	resources, err := s.loadProviderResources(ctx, namespace, name)
+	if err != nil {
+		return fmt.Errorf("failed to load provider resources for deletion: %w", err)
+	}
+
+	// Delete resources in reverse order to avoid dependency issues
+	// Delete AIServiceBackend first (it references other resources)
+	for _, resource := range resources {
+		switch r := resource.(type) {
+		case *aigatewayv1alpha1.AIServiceBackend:
+			err = s.clientManager.AIServiceBackend.Delete(ctx, r.Namespace, r.Name)
+			if err != nil {
+				return fmt.Errorf("failed to delete AIServiceBackend: %w", err)
+			}
+		}
+	}
+
+	// Then delete BackendSecurityPolicy
+	for _, resource := range resources {
+		switch r := resource.(type) {
+		case *aigatewayv1alpha1.BackendSecurityPolicy:
+			err = s.clientManager.BackendSecurityPolicy.Delete(ctx, r.Namespace, r.Name)
+			if err != nil {
+				return fmt.Errorf("failed to delete BackendSecurityPolicy: %w", err)
+			}
+		}
+	}
+
+	// Then delete BackendTLSPolicy
+	for _, resource := range resources {
+		switch r := resource.(type) {
+		case *gwapiv1a3.BackendTLSPolicy:
+			err = s.clientManager.BackendTLSPolicy.Delete(ctx, r.Namespace, r.Name)
+			if err != nil {
+				return fmt.Errorf("failed to delete BackendTLSPolicy: %w", err)
+			}
+		}
+	}
+
+	// Then delete Backend
+	for _, resource := range resources {
+		switch r := resource.(type) {
+		case *gatewayv1alpha1.Backend:
+			err = s.clientManager.Backend.Delete(ctx, r.Namespace, r.Name)
+			if err != nil {
+				return fmt.Errorf("failed to delete Backend: %w", err)
+			}
+		}
+	}
+
+	// Finally delete Secrets
+	for _, resource := range resources {
+		switch r := resource.(type) {
+		case *corev1.Secret:
+			err = s.clientManager.Secret.Delete(ctx, r.Namespace, r.Name)
+			if err != nil {
+				return fmt.Errorf("failed to delete Secret: %w", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // loadProviderResources loads all resources for a specific provider hierarchically

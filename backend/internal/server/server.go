@@ -15,6 +15,7 @@ import (
 
 	"github.com/envoyproxy/ai-gateway/console/backend/internal/service"
 	"github.com/envoyproxy/ai-gateway/console/backend/pkg/client"
+	"github.com/envoyproxy/ai-gateway/console/backend/pkg/llm"
 	"github.com/gin-gonic/gin"
 	"github.com/go-logr/logr"
 )
@@ -132,4 +133,55 @@ func (s *Server) GetLLMProviderByName(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, provider)
+}
+
+// CreateLLMProvider handles POST /api/v1/llm/providers with Gin
+func (s *Server) CreateLLMProvider(c *gin.Context) {
+	var provider llm.LLMProvider
+
+	if err := c.ShouldBindJSON(&provider); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid JSON: %v", err)})
+		return
+	}
+
+	// Validate required fields
+	if provider.Name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Provider name is required"})
+		return
+	}
+
+	if provider.Namespace == "" {
+		provider.Namespace = "default"
+	}
+
+	// Create the provider
+	err := s.llmProviderService.CreateProvider(c.Request.Context(), &provider)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create LLM provider: %v", err)})
+		return
+	}
+
+	// Return the created provider (masked)
+	maskedProvider := provider.MaskSecret()
+	c.JSON(http.StatusCreated, maskedProvider)
+}
+
+// DeleteLLMProvider handles DELETE /api/v1/llm/providers/{name} with Gin
+func (s *Server) DeleteLLMProvider(c *gin.Context) {
+	name := c.Param("name")
+	namespace := c.DefaultQuery("namespace", "default")
+
+	if name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Provider name is required"})
+		return
+	}
+
+	// Delete the provider
+	err := s.llmProviderService.DeleteProvider(c.Request.Context(), namespace, name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to delete LLM provider: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Provider '%s' deleted successfully", name)})
 }
