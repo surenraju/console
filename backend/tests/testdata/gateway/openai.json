@@ -1,0 +1,96 @@
+[
+  {
+    "kind": "Backend",
+    "apiVersion": "gateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "openai",
+      "namespace": "default"
+    },
+    "spec": {
+      "endpoints": [
+        {
+          "fqdn": {
+            "hostname": "api.openai.com",
+            "port": 443
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "BackendTLSPolicy",
+    "apiVersion": "gateway.envoyproxy.io/v1alpha3",
+    "metadata": {
+      "name": "openai",
+      "namespace": "default"
+    },
+    "spec": {
+      "targetRefs": [
+        {
+          "group": "gateway.envoyproxy.io",
+          "kind": "Backend",
+          "name": "openai"
+        }
+      ],
+      "validation": {
+        "wellKnownCACertificates": "System",
+        "hostname": "api.openai.com"
+      }
+    }
+  },
+  {
+    "kind": "Secret",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "openai",
+      "namespace": "default"
+    },
+    "stringData": {
+      "apiKey": "sk-xxxx"
+    },
+    "type": "Opaque"
+  },
+  {
+    "kind": "BackendSecurityPolicy",
+    "apiVersion": "aigateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "openai",
+      "namespace": "default"
+    },
+    "spec": {
+      "type": "APIKey",
+      "apiKey": {
+        "secretRef": {
+          "name": "openai",
+          "namespace": "default"
+        }
+      }
+    }
+  },
+  {
+    "kind": "AIServiceBackend",
+    "apiVersion": "aigateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "openai",
+      "namespace": "default"
+    },
+    "spec": {
+      "schema": {
+        "name": "openai",
+        "version": "v1"
+      },
+      "backendRef": {
+        "group": "gateway.envoyproxy.io",
+        "kind": "Backend",
+        "name": "openai",
+        "namespace": "default",
+        "port": 443
+      },
+      "backendSecurityPolicyRef": {
+        "group": "aigateway.envoyproxy.io",
+        "kind": "BackendSecurityPolicy",
+        "name": "openai"
+      }
+    }
+  }
+]

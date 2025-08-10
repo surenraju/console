@@ -1,0 +1,114 @@
+[
+  {
+    "kind": "Backend",
+    "apiVersion": "gateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "gcp-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "endpoints": [
+        {
+          "fqdn": {
+            "hostname": "us-central1-aiplatform.googleapis.com",
+            "port": 443
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "BackendTLSPolicy",
+    "apiVersion": "gateway.envoyproxy.io/v1alpha3",
+    "metadata": {
+      "name": "gcp-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "targetRefs": [
+        {
+          "group": "gateway.envoyproxy.io",
+          "kind": "Backend",
+          "name": "gcp-provider"
+        }
+      ],
+      "validation": {
+        "wellKnownCACertificates": "System",
+        "hostname": "us-central1-aiplatform.googleapis.com"
+      }
+    }
+  },
+  {
+    "kind": "Secret",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "gcp-provider",
+      "namespace": "default"
+    },
+    "stringData": {
+      "client-secret": "-----BEGIN PRIVATE KEY-----\nMIIE...sample...key==\n-----END PRIVATE KEY-----\n"
+    },
+    "type": "Opaque"
+  },
+  {
+    "kind": "BackendSecurityPolicy",
+    "apiVersion": "aigateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "gcp-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "type": "GCPCredentials",
+      "gcpCredentials": {
+        "projectName": "your-project-id",
+        "region": "us-central1",
+        "workloadIdentityFederationConfig": {
+          "projectID": "your-project-id",
+          "workloadIdentityPoolName": "service-account@your-project-id.iam.gserviceaccount.com",
+          "workloadIdentityProviderName": "your-project-id",
+          "serviceAccountImpersonation": {
+            "serviceAccountName": "123456789"
+          },
+          "oidcExchangeToken": {
+            "oidc": {
+              "provider": {
+                "issuer": "https://accounts.google.com/o/oauth2/auth"
+              },
+              "clientID": "https://oauth2.googleapis.com/token",
+              "clientSecret": {
+                "name": "gcp-provider",
+                "namespace": "default"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "kind": "AIServiceBackend",
+    "apiVersion": "aigateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "gcp-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "schema": {
+        "name": "GCPVertexAI",
+        "version": "v1"
+      },
+      "backendRef": {
+        "group": "gateway.envoyproxy.io",
+        "kind": "Backend",
+        "name": "gcp-provider",
+        "namespace": "default",
+        "port": 443
+      },
+      "backendSecurityPolicyRef": {
+        "group": "aigateway.envoyproxy.io",
+        "kind": "BackendSecurityPolicy",
+        "name": "gcp-provider"
+      }
+    }
+  }
+]

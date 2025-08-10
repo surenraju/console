@@ -1,0 +1,98 @@
+[
+  {
+    "kind": "Backend",
+    "apiVersion": "gateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "azure-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "endpoints": [
+        {
+          "fqdn": {
+            "hostname": "azure.openai.com",
+            "port": 443
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "BackendTLSPolicy",
+    "apiVersion": "gateway.envoyproxy.io/v1alpha3",
+    "metadata": {
+      "name": "azure-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "targetRefs": [
+        {
+          "group": "gateway.envoyproxy.io",
+          "kind": "Backend",
+          "name": "azure-provider"
+        }
+      ],
+      "validation": {
+        "wellKnownCACertificates": "System",
+        "hostname": "azure.openai.com"
+      }
+    }
+  },
+  {
+    "kind": "Secret",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "azure-provider",
+      "namespace": "default"
+    },
+    "stringData": {
+      "client-secret": "azure-secret-key"
+    },
+    "type": "Opaque"
+  },
+  {
+    "kind": "BackendSecurityPolicy",
+    "apiVersion": "aigateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "azure-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "type": "AzureCredentials",
+      "azureCredentials": {
+        "clientID": "client-id-123",
+        "tenantID": "tenant-id-456",
+        "clientSecretRef": {
+          "name": "azure-provider",
+          "namespace": "default"
+        }
+      }
+    }
+  },
+  {
+    "kind": "AIServiceBackend",
+    "apiVersion": "aigateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "azure-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "schema": {
+        "name": "azure",
+        "version": "v1"
+      },
+      "backendRef": {
+        "group": "gateway.envoyproxy.io",
+        "kind": "Backend",
+        "name": "azure-provider",
+        "namespace": "default",
+        "port": 443
+      },
+      "backendSecurityPolicyRef": {
+        "group": "aigateway.envoyproxy.io",
+        "kind": "BackendSecurityPolicy",
+        "name": "azure-provider"
+      }
+    }
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "name": "azure-provider",
+  "namespace": "default",
+  "schema": "azure",
+  "version": "v1",
+  "auth": {
+    "type": "azure",
+    "azure": {
+      "clientID": "client-id-123",
+      "tenantID": "tenant-id-456",
+      "apiKey": "azure-secret-key"
+    }
+  },
+  "backend": {
+    "host": "azure.openai.com",
+    "port": 443
+  },
+  "tls": {
+    "hostname": "azure.openai.com",
+    "wellKnownCACertificates": "System"
+  }
+}

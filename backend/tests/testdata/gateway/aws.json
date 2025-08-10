@@ -1,0 +1,100 @@
+[
+  {
+    "kind": "Backend",
+    "apiVersion": "gateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "aws-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "endpoints": [
+        {
+          "fqdn": {
+            "hostname": "bedrock.aws.com",
+            "port": 443
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "BackendTLSPolicy",
+    "apiVersion": "gateway.envoyproxy.io/v1alpha3",
+    "metadata": {
+      "name": "aws-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "targetRefs": [
+        {
+          "group": "gateway.envoyproxy.io",
+          "kind": "Backend",
+          "name": "aws-provider"
+        }
+      ],
+      "validation": {
+        "wellKnownCACertificates": "System",
+        "hostname": "bedrock.aws.com"
+      }
+    }
+  },
+  {
+    "kind": "Secret",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "aws-provider",
+      "namespace": "default"
+    },
+    "stringData": {
+      "accessKeyId": "AKIA...",
+      "secretAccessKey": "SECRET..."
+    },
+    "type": "Opaque"
+  },
+  {
+    "kind": "BackendSecurityPolicy",
+    "apiVersion": "aigateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "aws-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "type": "AWSCredentials",
+      "awsCredentials": {
+        "region": "us-east-1",
+        "credentialsFile": {
+          "secretRef": {
+            "name": "aws-provider",
+            "namespace": "default"
+          }
+        }
+      }
+    }
+  },
+  {
+    "kind": "AIServiceBackend",
+    "apiVersion": "aigateway.envoyproxy.io/v1alpha1",
+    "metadata": {
+      "name": "aws-provider",
+      "namespace": "default"
+    },
+    "spec": {
+      "schema": {
+        "name": "aws",
+        "version": "v1"
+      },
+      "backendRef": {
+        "group": "gateway.envoyproxy.io",
+        "kind": "Backend",
+        "name": "aws-provider",
+        "namespace": "default",
+        "port": 443
+      },
+      "backendSecurityPolicyRef": {
+        "group": "aigateway.envoyproxy.io",
+        "kind": "BackendSecurityPolicy",
+      "name": "aws-provider"
+      }
+    }
+  }
+]

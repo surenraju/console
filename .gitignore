@@ -6,6 +6,7 @@
 # Documentation and instruction files
 ai-instructions.md
 phase1.md
+ai-instruction-backend.md
 
 # Examples and assets
 examples/

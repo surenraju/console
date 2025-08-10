@@ -1,0 +1,28 @@
+{
+  "name": "gcp-provider",
+  "namespace": "default",
+  "schema": "GCPVertexAI",
+  "version": "v1",
+  "auth": {
+    "type": "gcp",
+    "gcp": {
+      "projectId": "your-project-id",
+      "location": "us-central1",
+      "workloadIdentityPoolName": "service-account@your-project-id.iam.gserviceaccount.com",
+      "workloadIdentityProviderName": "your-project-id",
+      "serviceAccountName": "123456789",
+      "oidcIssuer": "https://accounts.google.com/o/oauth2/auth",
+      "oidcClientId": "https://oauth2.googleapis.com/token",
+      "oidcClientSecret": "-----BEGIN PRIVATE KEY-----\nMIIE...sample...key==\n-----END PRIVATE KEY-----\n",
+      "privateKey": "-----BEGIN PRIVATE KEY-----\nMIIE...sample...key==\n-----END PRIVATE KEY-----\n"
+    }
+  },
+  "backend": {
+    "host": "us-central1-aiplatform.googleapis.com",
+    "port": 443
+  },
+  "tls": {
+    "hostname": "us-central1-aiplatform.googleapis.com",
+    "wellKnownCACertificates": "System"
+  }
+}

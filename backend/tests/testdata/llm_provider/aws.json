@@ -1,0 +1,22 @@
+{
+  "name": "aws-provider",
+  "namespace": "default",
+  "schema": "aws",
+  "version": "v1",
+  "auth": {
+    "type": "aws",
+    "aws": {
+      "region": "us-east-1",
+      "accessKeyID": "AKIA...",
+      "secretAccessKey": "SECRET..."
+    }
+  },
+  "backend": {
+    "host": "bedrock.aws.com",
+    "port": 443
+  },
+  "tls": {
+    "hostname": "bedrock.aws.com",
+    "wellKnownCACertificates": "System"
+  }
+}
