@@ -9,16 +9,19 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
+import { Link, useLocation } from "react-router-dom"
 
 interface NavMainProps {
   items: {
     title: string
-    url: string
+    path: string
     icon?: Icon
   }[]
 }
 
 export function NavMain({ items }: NavMainProps) {
+  const location = useLocation()
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -44,9 +47,15 @@ export function NavMain({ items }: NavMainProps) {
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon className="!size-4" />}
-                <span>{item.title}</span>
+              <SidebarMenuButton 
+                tooltip={item.title}
+                asChild
+                isActive={location.pathname === item.path}
+              >
+                <Link to={item.path}>
+                  {item.icon && <item.icon className="!size-4" />}
+                  <span>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

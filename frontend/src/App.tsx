@@ -1,5 +1,7 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
+import { LLMProvidersPage } from "@/components/llm-providers-page"
 import { ThemeProvider } from "@/components/theme-provider"
 
 function App() {
@@ -10,9 +12,14 @@ function App() {
       enableSystem
       disableTransitionOnChange
     >
-      <DashboardLayout>
-        <DashboardPage />
-      </DashboardLayout>
+      <BrowserRouter>
+        <DashboardLayout>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/llm-providers" element={<LLMProvidersPage />} />
+          </Routes>
+        </DashboardLayout>
+      </BrowserRouter>
     </ThemeProvider>
   )
 }
