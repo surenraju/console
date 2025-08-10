@@ -58,6 +58,13 @@
       "namespace": "default"
     },
     "spec": {
+      "targetRefs": [
+        {
+          "group": "aigateway.envoyproxy.io",
+          "kind": "AIServiceBackend",
+          "name": "gcp-provider"
+        }
+      ],
       "type": "GCPCredentials",
       "gcpCredentials": {
         "projectName": "your-project-id",
@@ -103,11 +110,6 @@
         "name": "gcp-provider",
         "namespace": "default",
         "port": 443
-      },
-      "backendSecurityPolicyRef": {
-        "group": "aigateway.envoyproxy.io",
-        "kind": "BackendSecurityPolicy",
-        "name": "gcp-provider"
       }
     }
   }

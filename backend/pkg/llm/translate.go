@@ -100,6 +100,15 @@ func (l *LLMProvider) ToEnvoyGatewayResources() ([]any, error) {
 			Name:      l.Name,
 			Namespace: l.Namespace,
 		},
+		Spec: aigatewayv1alpha1.BackendSecurityPolicySpec{
+			TargetRefs: []gwapiv1a2.LocalPolicyTargetReference{
+				{
+					Group: GroupAIGatewayEnvoyProxy,
+					Kind:  KindAIServiceBackend,
+					Name:  gwapiv1a2.ObjectName(l.Name),
+				},
+			},
+		},
 	}
 
 	switch strings.ToLower(l.Auth.Type) {
@@ -393,11 +402,7 @@ func (l *LLMProvider) ToEnvoyGatewayResources() ([]any, error) {
 				Namespace: strPtr(gwapiv1.Namespace(l.Namespace)),
 				Port:      portPtr(l.Backend.Port),
 			},
-			BackendSecurityPolicyRef: &gwapiv1.LocalObjectReference{
-				Group: GroupAIGatewayEnvoyProxy,
-				Kind:  KindBackendSecurityPolicy,
-				Name:  gwapiv1.ObjectName(l.Name),
-			},
+			// Note: Removed deprecated BackendSecurityPolicyRef - using targetRefs in BackendSecurityPolicy instead
 		},
 	}
 	resources = append(resources, aisb)

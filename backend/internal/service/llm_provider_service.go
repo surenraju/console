@@ -14,6 +14,7 @@ import (
 	"github.com/envoyproxy/ai-gateway/console/backend/pkg/llm"
 	gatewayv1alpha1 "github.com/envoyproxy/gateway/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	gwapiv1a3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 )
 
@@ -34,10 +35,12 @@ func NewLLMProviderService(clientManager *client.Manager) *LLMProviderService {
 func (s *LLMProviderService) ListProviders(ctx context.Context, namespace string) ([]llm.LLMProvider, error) {
 	backends, err := s.clientManager.AIServiceBackend.List(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list AIServiceBackends: %w", err)
+		return []llm.LLMProvider{}, fmt.Errorf("failed to list AIServiceBackends: %w", err)
 	}
 
-	var providers []llm.LLMProvider
+	// Initialize with empty slice to ensure we never return nil
+	providers := make([]llm.LLMProvider, 0)
+
 	for _, backend := range backends.Items {
 		resources, err := s.loadProviderResources(ctx, backend.Namespace, backend.Name)
 		if err != nil {
@@ -89,30 +92,45 @@ func (s *LLMProviderService) CreateProvider(ctx context.Context, provider *llm.L
 		case *gatewayv1alpha1.Backend:
 			err = s.clientManager.Backend.Create(ctx, r)
 			if err != nil {
+				if errors.IsAlreadyExists(err) {
+					return fmt.Errorf("backend '%s' already exists. Please choose a different name or delete the existing backend first", r.Name)
+				}
 				return fmt.Errorf("failed to create Backend: %w", err)
 			}
 
 		case *gwapiv1a3.BackendTLSPolicy:
 			err = s.clientManager.BackendTLSPolicy.Create(ctx, r)
 			if err != nil {
+				if errors.IsAlreadyExists(err) {
+					return fmt.Errorf("backend TLS policy '%s' already exists. Please choose a different name or delete the existing policy first", r.Name)
+				}
 				return fmt.Errorf("failed to create BackendTLSPolicy: %w", err)
 			}
 
 		case *aigatewayv1alpha1.BackendSecurityPolicy:
 			err = s.clientManager.BackendSecurityPolicy.Create(ctx, r)
 			if err != nil {
+				if errors.IsAlreadyExists(err) {
+					return fmt.Errorf("backend security policy '%s' already exists. Please choose a different name or delete the existing policy first", r.Name)
+				}
 				return fmt.Errorf("failed to create BackendSecurityPolicy: %w", err)
 			}
 
 		case *aigatewayv1alpha1.AIServiceBackend:
 			err = s.clientManager.AIServiceBackend.Create(ctx, r)
 			if err != nil {
+				if errors.IsAlreadyExists(err) {
+					return fmt.Errorf("AI service backend '%s' already exists. Please choose a different name or delete the existing provider first", r.Name)
+				}
 				return fmt.Errorf("failed to create AIServiceBackend: %w", err)
 			}
 
 		case *corev1.Secret:
 			err = s.clientManager.Secret.Create(ctx, r)
 			if err != nil {
+				if errors.IsAlreadyExists(err) {
+					return fmt.Errorf("secret '%s' already exists. Please choose a different name or delete the existing secret first", r.Name)
+				}
 				return fmt.Errorf("failed to create Secret: %w", err)
 			}
 

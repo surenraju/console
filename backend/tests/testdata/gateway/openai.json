@@ -58,6 +58,13 @@
       "namespace": "default"
     },
     "spec": {
+      "targetRefs": [
+        {
+          "group": "aigateway.envoyproxy.io",
+          "kind": "AIServiceBackend",
+          "name": "openai"
+        }
+      ],
       "type": "APIKey",
       "apiKey": {
         "secretRef": {
@@ -85,11 +92,6 @@
         "name": "openai",
         "namespace": "default",
         "port": 443
-      },
-      "backendSecurityPolicyRef": {
-        "group": "aigateway.envoyproxy.io",
-        "kind": "BackendSecurityPolicy",
-        "name": "openai"
       }
     }
   }

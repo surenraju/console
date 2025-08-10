@@ -70,6 +70,11 @@ func (s *Server) GetLLMProviders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Ensure we always return an array, never null
+	if providers == nil {
+		providers = []llm.LLMProvider{}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(providers)
 }

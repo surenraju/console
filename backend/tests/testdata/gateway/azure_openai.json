@@ -58,6 +58,13 @@
       "namespace": "default"
     },
     "spec": {
+      "targetRefs": [
+        {
+          "group": "aigateway.envoyproxy.io",
+          "kind": "AIServiceBackend",
+          "name": "azure-provider"
+        }
+      ],
       "type": "AzureCredentials",
       "azureCredentials": {
         "clientID": "client-id-123",
@@ -87,11 +94,6 @@
         "name": "azure-provider",
         "namespace": "default",
         "port": 443
-      },
-      "backendSecurityPolicyRef": {
-        "group": "aigateway.envoyproxy.io",
-        "kind": "BackendSecurityPolicy",
-        "name": "azure-provider"
       }
     }
   }
