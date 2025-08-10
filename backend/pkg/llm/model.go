@@ -5,7 +5,7 @@ type LLMProvider struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 
-	Schema  string `json:"schema"` // OpenAI, AWS, AzureOpenAI, GCP
+	Schema  string `json:"schema"` // supported schema OpenAI, AWSBedrock, AzureOpenAI, GCPVertexAI
 	Version string `json:"version,omitempty"`
 
 	Auth AuthConfig `json:"auth"`

@@ -21,6 +21,12 @@ import (
 func main() {
 	log.Println("Starting Envoy AI Gateway Console Backend...")
 
+	// Get port from environment variable, default to 8081
+	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	// Create server
 	srv, err := server.NewServer()
 	if err != nil {
@@ -32,7 +38,7 @@ func main() {
 
 	// Setup HTTP server
 	httpServer := &http.Server{
-		Addr:         ":8081",
+		Addr:         ":" + port,
 		Handler:      rt,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -40,7 +46,7 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		log.Println("Server starting on :8081")
+		log.Printf("Server starting on :%s", port)
 		log.Println("Available endpoints:")
 		log.Println("  GET /api/v1/llm/providers      - List all LLM providers")
 		log.Println("  POST /api/v1/llm/providers     - Create a new LLM provider")

@@ -2,7 +2,7 @@
 
 export interface LLMProvider {
   name: string;
-  schema: string; // OpenAI, AWS, AzureOpenAI, GCP
+  schema: string; // OpenAI, AWSBedrock, AzureOpenAI, GCPVertexAI
   version?: string;
   auth: AuthConfig;
   backend: Backend;
@@ -20,6 +20,7 @@ export interface AuthConfig {
 
 export interface SecretRef {
   name: string;
+  namespace: string;
 }
 
 export interface AWSAuth {
@@ -65,11 +66,13 @@ export interface TLSValidation {
 // Simplified interface for creating new providers (frontend form)
 export interface CreateLLMProviderRequest {
   name: string;
-  schema: string; // OpenAI, AWS, AzureOpenAI, GCP
+  schema: string; // OpenAI, AWSBedrock, AzureOpenAI, GCPVertexAI
   version?: string;
   
   // Simplified auth - will be transformed to full AuthConfig
   authType: string; // APIKey, AWS, Azure, GCP
+  
+  // Direct credentials for APIKey (OpenAI, Azure)
   apiKey?: string;
   
   // AWS specific
@@ -77,7 +80,7 @@ export interface CreateLLMProviderRequest {
   awsAccessKeyId?: string;
   awsSecretAccessKey?: string;
   
-  // GCP specific
+  // GCP specific - Workload Identity Federation
   gcpProjectId?: string;
   gcpLocation?: string;
   gcpWorkloadIdentityPoolName?: string;
@@ -86,6 +89,14 @@ export interface CreateLLMProviderRequest {
   gcpOidcIssuer?: string;
   gcpOidcClientId?: string;
   gcpOidcClientSecret?: string;
+  
+  // GCP Legacy fields for backward compatibility
+  gcpPrivateKey?: string;
+  gcpClientEmail?: string;
+  gcpServiceAccountProjectId?: string;
+  gcpClientId?: string;
+  gcpAuthUri?: string;
+  gcpTokenUri?: string;
   
   // Azure specific
   azureClientId?: string;
@@ -103,21 +114,19 @@ export interface CreateLLMProviderRequest {
 
 // Helper functions to transform between frontend and backend formats
 export function createLLMProviderFromForm(form: CreateLLMProviderRequest): LLMProvider {
-  const auth: AuthConfig = {
-    type: form.authType,
-  };
-
-  // Set auth fields based on type
+  const authConfig: AuthConfig = { type: form.authType };
+  
+  // Handle direct credentials
   if (form.authType === 'APIKey' && form.apiKey) {
-    auth.apiKey = form.apiKey;
+    authConfig.apiKey = form.apiKey;
   } else if (form.authType === 'AWS') {
-    auth.aws = {
+    authConfig.aws = {
       region: form.awsRegion || '',
-      accessKeyId: form.awsAccessKeyId,
-      secretAccessKey: form.awsSecretAccessKey,
+      accessKeyId: form.awsAccessKeyId || '',
+      secretAccessKey: form.awsSecretAccessKey || '',
     };
   } else if (form.authType === 'GCP') {
-    auth.gcp = {
+    authConfig.gcp = {
       projectId: form.gcpProjectId || '',
       location: form.gcpLocation || '',
       workloadIdentityPoolName: form.gcpWorkloadIdentityPoolName || '',
@@ -126,12 +135,19 @@ export function createLLMProviderFromForm(form: CreateLLMProviderRequest): LLMPr
       oidcIssuer: form.gcpOidcIssuer || '',
       oidcClientId: form.gcpOidcClientId || '',
       oidcClientSecret: form.gcpOidcClientSecret || '',
+      // Legacy fields
+      privateKey: form.gcpPrivateKey,
+      clientEmail: form.gcpClientEmail,
+      serviceAccountProjectId: form.gcpServiceAccountProjectId,
+      clientId: form.gcpClientId,
+      authUri: form.gcpAuthUri,
+      tokenUri: form.gcpTokenUri,
     };
   } else if (form.authType === 'Azure') {
-    auth.azure = {
-      clientId: form.azureClientId,
-      tenantId: form.azureTenantId,
-      apiKey: form.azureApiKey,
+    authConfig.azure = {
+      clientId: form.azureClientId || '',
+      tenantId: form.azureTenantId || '',
+      apiKey: form.azureApiKey || '',
     };
   }
 
@@ -139,7 +155,7 @@ export function createLLMProviderFromForm(form: CreateLLMProviderRequest): LLMPr
     name: form.name,
     schema: form.schema,
     version: form.version,
-    auth,
+    auth: authConfig,
     backend: {
       host: form.host,
       port: form.port,
