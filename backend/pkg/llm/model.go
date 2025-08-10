@@ -88,3 +88,124 @@ type TLSValidation struct {
 	Hostname                string `json:"hostname"`
 	WellKnownCACertificates string `json:"wellKnownCACertificates"` // e.g., "System"
 }
+
+const MaskedSecretValue = "***MASKED***"
+
+// MaskSecret returns a copy of the LLMProvider with all sensitive information masked.
+func (l *LLMProvider) MaskSecret() *LLMProvider {
+	if l == nil {
+		return nil
+	}
+
+	masked := &LLMProvider{
+		Name:      l.Name,
+		Namespace: l.Namespace,
+		Schema:    l.Schema,
+		Version:   l.Version,
+		Auth:      l.Auth.MaskSecret(),
+		Backend:   l.Backend,
+		TLS:       l.TLS,
+	}
+
+	return masked
+}
+
+// MaskSecret returns a copy of the AuthConfig with all sensitive information masked.
+func (a AuthConfig) MaskSecret() AuthConfig {
+	masked := AuthConfig{
+		Type:      a.Type,
+		SecretRef: a.SecretRef, // SecretRef contains only references, not actual secrets
+	}
+
+	// Mask direct credentials
+	if a.APIKey != "" {
+		masked.APIKey = MaskedSecretValue
+	}
+
+	if a.AWS != nil {
+		masked.AWS = a.AWS.MaskSecret()
+	}
+
+	if a.GCP != nil {
+		masked.GCP = a.GCP.MaskSecret()
+	}
+
+	if a.Azure != nil {
+		masked.Azure = a.Azure.MaskSecret()
+	}
+
+	return masked
+}
+
+// MaskSecret returns a copy of the AWSAuth with all sensitive information masked.
+func (a *AWSAuth) MaskSecret() *AWSAuth {
+	if a == nil {
+		return nil
+	}
+
+	masked := &AWSAuth{
+		Region: a.Region, // Region is not sensitive
+	}
+
+	if a.AccessKeyID != "" {
+		masked.AccessKeyID = MaskedSecretValue
+	}
+
+	if a.SecretAccessKey != "" {
+		masked.SecretAccessKey = MaskedSecretValue
+	}
+
+	return masked
+}
+
+// MaskSecret returns a copy of the GCPAuth with all sensitive information masked.
+func (g *GCPAuth) MaskSecret() *GCPAuth {
+	if g == nil {
+		return nil
+	}
+
+	masked := &GCPAuth{
+		// Non-sensitive configuration fields
+		ProjectID:                    g.ProjectID,
+		Location:                     g.Location,
+		WorkloadIdentityPoolName:     g.WorkloadIdentityPoolName,
+		WorkloadIdentityProviderName: g.WorkloadIdentityProviderName,
+		ServiceAccountName:           g.ServiceAccountName,
+		OIDCIssuer:                   g.OIDCIssuer,
+		OIDCClientID:                 g.OIDCClientID,
+		ClientEmail:                  g.ClientEmail,
+		ServiceAccountProjectID:      g.ServiceAccountProjectID,
+		ClientID:                     g.ClientID,
+		AuthURI:                      g.AuthURI,
+		TokenURI:                     g.TokenURI,
+	}
+
+	// Mask sensitive fields
+	if g.OIDCClientSecret != "" {
+		masked.OIDCClientSecret = MaskedSecretValue
+	}
+
+	if g.PrivateKey != "" {
+		masked.PrivateKey = MaskedSecretValue
+	}
+
+	return masked
+}
+
+// MaskSecret returns a copy of the AzureAuth with all sensitive information masked.
+func (a *AzureAuth) MaskSecret() *AzureAuth {
+	if a == nil {
+		return nil
+	}
+
+	masked := &AzureAuth{
+		ClientID: a.ClientID, // ClientID is not sensitive
+		TenantID: a.TenantID, // TenantID is not sensitive
+	}
+
+	if a.APIKey != "" {
+		masked.APIKey = MaskedSecretValue
+	}
+
+	return masked
+}

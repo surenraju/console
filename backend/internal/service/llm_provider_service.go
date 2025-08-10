@@ -48,7 +48,9 @@ func (s *LLMProviderService) ListProviders(ctx context.Context, namespace string
 			continue
 		}
 
-		providers = append(providers, *provider)
+		// Mask sensitive information before adding to the list
+		maskedProvider := provider.MaskSecret()
+		providers = append(providers, *maskedProvider)
 	}
 
 	return providers, nil
@@ -61,7 +63,13 @@ func (s *LLMProviderService) GetProvider(ctx context.Context, namespace, name st
 		return nil, err
 	}
 
-	return llm.ToLLMProvider(resources)
+	provider, err := llm.ToLLMProvider(resources)
+	if err != nil {
+		return nil, err
+	}
+
+	// Mask sensitive information before returning
+	return provider.MaskSecret(), nil
 }
 
 // loadProviderResources loads all resources for a specific provider hierarchically
