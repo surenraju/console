@@ -24,6 +24,14 @@ build/
 *.so
 *.dylib
 
+# Go binaries
+backend/bin/
+backend/cmd/server/server
+backend/cmd/*/main
+**/bin/
+server
+main
+
 # Environment files
 .env
 .env.local
